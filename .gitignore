@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+lib/
+bin/
+include/
+.Python
+
+# mac
+.DS_Store
+
+# Project specific
+train.csv
+test.csv
