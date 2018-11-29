@@ -11,3 +11,4 @@ include/
 # Project specific
 train.csv
 test.csv
+corpus.txt
