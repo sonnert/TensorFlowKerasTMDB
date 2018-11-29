@@ -9,14 +9,16 @@ from sklearn.model_selection import train_test_split
 from datetime import datetime
 
 DATA_PATH="res/tmdb_5000_movies.csv"
-MODEL_DIR="models/"
 
 def prepare_data_s():
     """
     Prepares data to be used for the single-label regression task
-    of predicting a movie's generated revenue.
+    of predicting a movie's generated revenue. 
+    
+    A created corpus is to be used together with the genres column 
+    to create a TensorFlow categorical multi-value feature.
 
-    Creates "train.csv" and "test.csv" data files.
+    Creates "train.csv", "test.csv", and "corpus.txt" data files.
     """
 
     data = pd.read_csv(DATA_PATH, usecols=
@@ -29,12 +31,17 @@ def prepare_data_s():
     Xra = pd.concat([dfraw, pd.Series(dates_to_years, name="year")], axis=1)
 
     list_of_genres_per_sample = [[e['name'] for e in json.loads(le)] for le in data['genres']]
-    genres_df = pd.DataFrame(list_of_genres_per_sample).iloc[:,:3]
-    genres_df.columns = ['genre1', 'genre2', 'genre3']
+    flat_list_of_genres_per_sample = [item for sublist in list_of_genres_per_sample for item in sublist]
 
-    df = pd.concat([Xra, genres_df], axis=1)
+    with open("corpus.txt", mode="w+") as f:
+        for s in list(set(flat_list_of_genres_per_sample)):
+            f.write("%s\n" % s)
+
+    df = pd.concat([Xra, pd.Series(list_of_genres_per_sample, name='genres')], axis=1)
     df = df[df['revenue'] != 0]
     train, test = train_test_split(df, test_size=0.1)
 
     train.to_csv("train.csv", index=False)
     test.to_csv("test.csv", index=False)
+
+prepare_data_s()
