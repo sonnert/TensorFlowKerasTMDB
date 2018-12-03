@@ -3,6 +3,7 @@ __pycache__/
 lib/
 bin/
 include/
+models/
 .Python
 
 # mac
