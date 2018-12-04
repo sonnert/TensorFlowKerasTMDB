@@ -10,6 +10,6 @@ models/
 .DS_Store
 
 # Project specific
-train.csv
-test.csv
-corpus.txt
+train*
+test*
+corpus*
