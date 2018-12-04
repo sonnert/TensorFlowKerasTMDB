@@ -12,11 +12,11 @@ MODEL_DIR="models/"
 
 def input_fn_train():
     dataset = tf.data.TextLineDataset(filenames=TRAIN_DATA).skip(1)
-    print("")
-    print("Training...")
-
     HEADERS = ['vote_average', 'budget', 'runtime', 'revenue', 'vote_count', 'year']
     FIELD_DEFAULTS = [[0.0], [0.0], [0.0], [0.0], [0.0], [0.0]]
+
+    genres = tf.feature_column.indicator_column(tf.feature_column.categorical_column_with_vocabulary_file(
+        key='genres', vocabulary_file=CORPUS))
 
     def parse_line(line):
         fields = tf.decode_csv(line, FIELD_DEFAULTS)
@@ -25,13 +25,11 @@ def input_fn_train():
         return features, label
 
     dataset = dataset.batch(32).map(parse_line)
-    return dataset
+    dataset_z = tf.data.Dataset.zip((dataset, genres))
+    return dataset_z
 
 def input_fn_eval():
     dataset = tf.data.TextLineDataset(filenames=TEST_DATA).skip(1)
-    print("")
-    print("Evaluating...")
-
     HEADERS = ['vote_average', 'budget', 'runtime', 'revenue', 'vote_count', 'year']
     FIELD_DEFAULTS = [[0.0], [0.0], [0.0], [0.0], [0.0], [0.0]]
 
@@ -80,9 +78,11 @@ if __name__ == "__main__":
                 )
             )
 
-    n_epochs = 10
+    n_epochs = 1
     for i in range(n_epochs):
         est.train(input_fn=input_fn_train)
+
+    """
     est.evaluate(input_fn=input_fn_eval)
     
     labels_l = pd.read_csv("test.csv", usecols=['vote_average'])['vote_average'].tolist()
@@ -99,3 +99,4 @@ if __name__ == "__main__":
 
     with tf.Session() as sess:
         print("MAE: ", mae.eval())
+    """
