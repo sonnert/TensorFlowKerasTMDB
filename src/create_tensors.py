@@ -4,32 +4,36 @@ import pandas as pd
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 
-TRAIN_DATA="train.csv"
-TEST_DATA="test.csv"
-PREDICT_DATA="test_nolabel.csv"
+TRAIN_DATA_N="train_n.csv"
+TEST_DATA_N="test_n.csv"
+TRAIN_DATA_C="train_c.csv"
+TEST_DATA_C="test_c.csv"
+PREDICT_DATA="test_n_nolabel.csv"
 CORPUS="corpus.txt"
 MODEL_DIR="models/"
 
 def input_fn_train():
-    dataset = tf.data.TextLineDataset(filenames=TRAIN_DATA).skip(1)
+    dataset = tf.data.TextLineDataset(filenames=TRAIN_DATA_N).skip(1)
     HEADERS = ['vote_average', 'budget', 'runtime', 'revenue', 'vote_count', 'year']
     FIELD_DEFAULTS = [[0.0], [0.0], [0.0], [0.0], [0.0], [0.0]]
 
-    genres = tf.feature_column.indicator_column(tf.feature_column.categorical_column_with_vocabulary_file(
-        key='genres', vocabulary_file=CORPUS))
+    #genres_data = tf.data.TextLineDataset(filenames=TRAIN_DATA_C)
+    #genres = tf.feature_column.indicator_column(tf.feature_column.categorical_column_with_vocabulary_file(
+    #    key='genres', vocabulary_file=CORPUS, dtype=tf.string))
 
     def parse_line(line):
         fields = tf.decode_csv(line, FIELD_DEFAULTS)
         features = dict(zip(HEADERS, fields))
         label = features.pop('vote_average')
         return features, label
-
+    
     dataset = dataset.batch(32).map(parse_line)
-    dataset_z = tf.data.Dataset.zip((dataset, genres))
-    return dataset_z
+    #dataset_c = genres_data.batch(32).map()
+    #dataset_z = tf.data.Dataset.zip((dataset_n, dataset_c))
+    return dataset
 
 def input_fn_eval():
-    dataset = tf.data.TextLineDataset(filenames=TEST_DATA).skip(1)
+    dataset = tf.data.TextLineDataset(filenames=TEST_DATA_N).skip(1)
     HEADERS = ['vote_average', 'budget', 'runtime', 'revenue', 'vote_count', 'year']
     FIELD_DEFAULTS = [[0.0], [0.0], [0.0], [0.0], [0.0], [0.0]]
 
@@ -78,14 +82,13 @@ if __name__ == "__main__":
                 )
             )
 
-    n_epochs = 1
+    n_epochs = 20
     for i in range(n_epochs):
         est.train(input_fn=input_fn_train)
 
-    """
     est.evaluate(input_fn=input_fn_eval)
     
-    labels_l = pd.read_csv("test.csv", usecols=['vote_average'])['vote_average'].tolist()
+    labels_l = pd.read_csv("test_n.csv", usecols=['vote_average'])['vote_average'].tolist()
     pred_g = est.predict(input_fn=input_fn_pred)
     pred_l = [e['predictions'][0] for e in pred_g]
     
@@ -99,4 +102,3 @@ if __name__ == "__main__":
 
     with tf.Session() as sess:
         print("MAE: ", mae.eval())
-    """

@@ -55,6 +55,31 @@ def prepare_data_s():
     train_n, test_n = train_test_split(df, test_size=0.1)
     _, pred_n = train_test_split(df_nolabel, test_size=0.1)
 
+    tftrain = "train.tfrecords"
+    writer = tf.python_io.TFRecordWriter(tftrain)
+
+    iterator_va = train_n['vote_average'].iteritems()
+
+    for row in df):
+        feature = {}
+        feature['vote_average'] = tf.train.Feature(float_list=tf.train.FloatList(value = iterator_va))
+        #feature['budget'] = tf.train.Feature(float_list=tf.train.FloatList(value = train_n['budget']))
+        #feature['runtime'] = tf.train.Feature(float_list=tf.train.FloatList(value = train_n['runtime']))
+        #feature['revenue'] = tf.train.Feature(float_list=tf.train.FloatList(value = train_n['revenue']))
+        #feature['vote_count'] = tf.train.Feature(float_list=tf.train.FloatList(value = train_n['vote_count']))
+        #feature['year'] = tf.train.Feature(float_list=tf.train.FloatList(value = train_n['year']))
+
+        #byteslist = [bytes(str(e), 'utf8') for e in list_of_genres_per_sample]
+        #feature['genres'] = tf.train.Feature(bytes_list=tf.train.BytesList(value = byteslist))
+
+        example = tf.train.Example(features=tf.train.Features(feature=feature))
+
+        writer.write(example.SerializeToString())
+
+    writer.close()
+    sys.stdout.flush()
+
+    """
     # Test row sizes
     assert len(train_c) == train_n.shape[0]
     assert len(test_c) == test_n.shape[0] == pred_n.shape[0]
@@ -79,6 +104,7 @@ def prepare_data_s():
     with open("corpus.txt", mode="w+") as f:
         for s in list(set(flat_list_of_genres_per_sample)):
             f.write("%s\n" % s)
+    """
 
 if __name__ == "__main__":
     prepare_data_s()

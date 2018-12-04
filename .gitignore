@@ -3,7 +3,6 @@ __pycache__/
 lib/
 bin/
 include/
-models/
 .Python
 
 # mac
@@ -13,3 +12,4 @@ models/
 train*
 test*
 corpus*
+models/
