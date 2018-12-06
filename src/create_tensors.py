@@ -12,26 +12,6 @@ PREDICT_DATA="test_n_nolabel.csv"
 CORPUS="corpus.txt"
 MODEL_DIR="models/"
 
-def input_fn_train():
-    dataset = tf.data.TextLineDataset(filenames=TRAIN_DATA_N).skip(1)
-    HEADERS = ['vote_average', 'budget', 'runtime', 'revenue', 'vote_count', 'year']
-    FIELD_DEFAULTS = [[0.0], [0.0], [0.0], [0.0], [0.0], [0.0]]
-
-    #genres_data = tf.data.TextLineDataset(filenames=TRAIN_DATA_C)
-    #genres = tf.feature_column.indicator_column(tf.feature_column.categorical_column_with_vocabulary_file(
-    #    key='genres', vocabulary_file=CORPUS, dtype=tf.string))
-
-    def parse_line(line):
-        fields = tf.decode_csv(line, FIELD_DEFAULTS)
-        features = dict(zip(HEADERS, fields))
-        label = features.pop('vote_average')
-        return features, label
-    
-    dataset = dataset.batch(32).map(parse_line)
-    #dataset_c = genres_data.batch(32).map()
-    #dataset_z = tf.data.Dataset.zip((dataset_n, dataset_c))
-    return dataset
-
 def input_fn_eval():
     dataset = tf.data.TextLineDataset(filenames=TEST_DATA_N).skip(1)
     HEADERS = ['vote_average', 'budget', 'runtime', 'revenue', 'vote_count', 'year']
@@ -59,15 +39,52 @@ def input_fn_pred():
     dataset = dataset.batch(32).map(parse_line)
     return dataset
 
+def input_fn_tf_train():
+    dataset = tf.data.TFRecordDataset(filenames="train.tfrecords")
+    
+    def parse_example(example):
+        features = {
+            'vote_average': tf.FixedLenFeature([], tf.float32, default_value=0.0),
+            'budget':       tf.FixedLenFeature([], tf.float32, default_value=0.0),
+            'runtime':      tf.FixedLenFeature([], tf.float32, default_value=0.0),
+            'revenue':      tf.FixedLenFeature([], tf.float32, default_value=0.0),
+            'vote_count':   tf.FixedLenFeature([], tf.float32, default_value=0.0),
+            'year':         tf.FixedLenFeature([], tf.float32, default_value=0.0)
+            #'genres':       tf.io.VarLenFeature(tf.string),
+        }
+        parsed_features = tf.io.parse_single_example(example, features)
+        label = parsed_features.pop('vote_average')
+        return parsed_features, label
+
+    dataset = dataset.map(parse_example).batch(32)
+    return dataset
+
 if __name__ == "__main__":
+    """
+    record_iterator = tf.python_io.tf_record_iterator(path='train.tfrecords')
+    for string_record in record_iterator:
+        example = tf.train.Example()
+        example.ParseFromString(string_record)
+        
+        print(example)
+        break
+    """
+
     tf.logging.set_verbosity(tf.logging.INFO)
     
+    cat_col = tf.feature_column.categorical_column_with_vocabulary_file(
+        key='genres',
+        vocabulary_file="corpus.txt",
+        vocabulary_size=19
+    )
     feature_columns = [
         tf.feature_column.numeric_column("budget"),
         tf.feature_column.numeric_column("runtime"),
         tf.feature_column.numeric_column("revenue"),
         tf.feature_column.numeric_column("vote_count"),
-        tf.feature_column.numeric_column("year")]
+        tf.feature_column.numeric_column("year")
+        #tf.feature_column.indicator_column(cat_col)
+        ]
 
     est = tf.estimator.DNNRegressor(
         model_dir=MODEL_DIR, 
@@ -82,9 +99,9 @@ if __name__ == "__main__":
                 )
             )
 
-    n_epochs = 20
+    n_epochs = 10
     for i in range(n_epochs):
-        est.train(input_fn=input_fn_train)
+        est.train(input_fn=input_fn_tf_train)
 
     est.evaluate(input_fn=input_fn_eval)
     

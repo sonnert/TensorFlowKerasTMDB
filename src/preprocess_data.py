@@ -55,29 +55,40 @@ def prepare_data_s():
     train_n, test_n = train_test_split(df, test_size=0.1)
     _, pred_n = train_test_split(df_nolabel, test_size=0.1)
 
+    def _bytes_feature(value):
+        """Returns a bytes_list from a string / byte."""
+        return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
+
+    def _float_feature(value):
+        """Returns a float_list from a float / double."""
+        return tf.train.Feature(float_list=tf.train.FloatList(value=[value]))
+
     tftrain = "train.tfrecords"
-    writer = tf.python_io.TFRecordWriter(tftrain)
+    
+    with tf.python_io.TFRecordWriter("train.tfrecords") as tf_writer:
+        header = True
+        for i, row in train_n.iterrows():
+            if header:
+                header = False
+                continue
 
-    iterator_va = train_n['vote_average'].iteritems()
+            feature = {
+                'vote_average': _float_feature(row['vote_average']),
+                'budget':       _float_feature(row['budget']),
+                'runtime':      _float_feature(row['runtime']),
+                'revenue':      _float_feature(row['revenue']),
+                'vote_count':   _float_feature(row['vote_count']),
+                'year':         _float_feature(row['year'])
+                #'genres':       tf.io.VarLenFeature(tf.string),
+            }
 
-    for row in df):
-        feature = {}
-        feature['vote_average'] = tf.train.Feature(float_list=tf.train.FloatList(value = iterator_va))
-        #feature['budget'] = tf.train.Feature(float_list=tf.train.FloatList(value = train_n['budget']))
-        #feature['runtime'] = tf.train.Feature(float_list=tf.train.FloatList(value = train_n['runtime']))
-        #feature['revenue'] = tf.train.Feature(float_list=tf.train.FloatList(value = train_n['revenue']))
-        #feature['vote_count'] = tf.train.Feature(float_list=tf.train.FloatList(value = train_n['vote_count']))
-        #feature['year'] = tf.train.Feature(float_list=tf.train.FloatList(value = train_n['year']))
+            #byteslist = [bytes(str(e), 'utf8') for e in list_of_genres_per_sample]
+            #feature['genres'] = tf.train.Feature(bytes_list=tf.train.BytesList(value = byteslist))
 
-        #byteslist = [bytes(str(e), 'utf8') for e in list_of_genres_per_sample]
-        #feature['genres'] = tf.train.Feature(bytes_list=tf.train.BytesList(value = byteslist))
+            example = tf.train.Example(features=tf.train.Features(feature=feature))
 
-        example = tf.train.Example(features=tf.train.Features(feature=feature))
+            tf_writer.write(example.SerializeToString())
 
-        writer.write(example.SerializeToString())
-
-    writer.close()
-    sys.stdout.flush()
 
     """
     # Test row sizes
