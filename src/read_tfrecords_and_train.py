@@ -49,8 +49,8 @@ def input_fn_tf_train():
             'runtime':      tf.FixedLenFeature([], tf.float32, default_value=0.0),
             'revenue':      tf.FixedLenFeature([], tf.float32, default_value=0.0),
             'vote_count':   tf.FixedLenFeature([], tf.float32, default_value=0.0),
-            'year':         tf.FixedLenFeature([], tf.float32, default_value=0.0)
-            #'genres':       tf.io.VarLenFeature(tf.string),
+            'year':         tf.FixedLenFeature([], tf.float32, default_value=0.0),
+            'genres':       tf.io.VarLenFeature(tf.string)
         }
         parsed_features = tf.io.parse_single_example(example, features)
         label = parsed_features.pop('vote_average')
@@ -60,16 +60,6 @@ def input_fn_tf_train():
     return dataset
 
 if __name__ == "__main__":
-    """
-    record_iterator = tf.python_io.tf_record_iterator(path='train.tfrecords')
-    for string_record in record_iterator:
-        example = tf.train.Example()
-        example.ParseFromString(string_record)
-        
-        print(example)
-        break
-    """
-
     tf.logging.set_verbosity(tf.logging.INFO)
     
     cat_col = tf.feature_column.categorical_column_with_vocabulary_file(
@@ -82,8 +72,8 @@ if __name__ == "__main__":
         tf.feature_column.numeric_column("runtime"),
         tf.feature_column.numeric_column("revenue"),
         tf.feature_column.numeric_column("vote_count"),
-        tf.feature_column.numeric_column("year")
-        #tf.feature_column.indicator_column(cat_col)
+        tf.feature_column.numeric_column("year"),
+        tf.feature_column.indicator_column(cat_col)
         ]
 
     est = tf.estimator.DNNRegressor(
