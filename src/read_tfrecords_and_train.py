@@ -81,6 +81,8 @@ if __name__ == "__main__":
     for i in range(n_epochs):
         est.train(input_fn=input_fn_train)
 
+    tf.logging.set_verbosity("INFO")
+
     print("")
     print("Evaluating...")
     est.evaluate(input_fn=input_fn_test)
