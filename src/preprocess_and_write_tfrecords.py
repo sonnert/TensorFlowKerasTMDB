@@ -11,12 +11,12 @@ DATA_PATH="../res/tmdb_5000_movies.csv"
 def prepare_data_s():
     """
     Prepares data to be used for the single-label regression task
-    of predicting a movie's generated revenue. 
+    of predicting a movie's vote average. 
     
-    A created corpus is to be used together with the genres column 
-    to create a TensorFlow categorical multi-value feature.
+    A corpus is created to be used together with the genres column 
+    to create a TensorFlow categorical variable length (indicator) feature.
 
-    Creates "train.csv", "test.csv", and "corpus.txt" data files.
+    Creates "train.tfrecords", "test.tfrecords", and "corpus.txt" data files.
     """
 
     # Read and shuffle data
@@ -54,7 +54,6 @@ def prepare_data_s():
 
     # Split to train and test sets
     train, test = train_test_split(df, test_size=0.1)
-    _, pred = train_test_split(df_nolabel, test_size=0.1)
 
     def _bytes_feature(value):
         byteslist = [bytes(str(e), 'utf8') for e in value]

@@ -4,11 +4,6 @@ import pandas as pd
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 
-TRAIN_DATA_N="train_n.csv"
-TEST_DATA_N="test_n.csv"
-TRAIN_DATA_C="train_c.csv"
-TEST_DATA_C="test_c.csv"
-PREDICT_DATA="test_n_nolabel.csv"
 CORPUS="corpus.txt"
 MODEL_DIR="models/"
 
@@ -80,8 +75,6 @@ def input_fn_test():
     return dataset
 
 if __name__ == "__main__":
-    tf.logging.set_verbosity(tf.logging.INFO)
-    
     cat_col = tf.feature_column.categorical_column_with_vocabulary_file(
         key='genres',
         vocabulary_file="corpus.txt",
