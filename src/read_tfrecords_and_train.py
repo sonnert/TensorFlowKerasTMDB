@@ -39,8 +39,28 @@ def input_fn_pred():
     dataset = dataset.batch(32).map(parse_line)
     return dataset
 
-def input_fn_tf_train():
+def input_fn_train():
     dataset = tf.data.TFRecordDataset(filenames="train.tfrecords")
+    
+    def parse_example(example):
+        features = {
+            'vote_average': tf.FixedLenFeature([], tf.float32, default_value=0.0),
+            'budget':       tf.FixedLenFeature([], tf.float32, default_value=0.0),
+            'runtime':      tf.FixedLenFeature([], tf.float32, default_value=0.0),
+            'revenue':      tf.FixedLenFeature([], tf.float32, default_value=0.0),
+            'vote_count':   tf.FixedLenFeature([], tf.float32, default_value=0.0),
+            'year':         tf.FixedLenFeature([], tf.float32, default_value=0.0),
+            'genres':       tf.io.VarLenFeature(tf.string)
+        }
+        parsed_features = tf.io.parse_single_example(example, features)
+        label = parsed_features.pop('vote_average')
+        return parsed_features, label
+
+    dataset = dataset.map(parse_example).batch(32)
+    return dataset
+
+def input_fn_test():
+    dataset = tf.data.TFRecordDataset(filenames="test.tfrecords")
     
     def parse_example(example):
         features = {
@@ -90,13 +110,18 @@ if __name__ == "__main__":
             )
 
     n_epochs = 10
+    print("")
+    print("Training...")
     for i in range(n_epochs):
-        est.train(input_fn=input_fn_tf_train)
+        est.train(input_fn=input_fn_train)
 
-    est.evaluate(input_fn=input_fn_eval)
+    print("")
+    print("Evaluating...")
+    est.evaluate(input_fn=input_fn_test)
     
+    """
     labels_l = pd.read_csv("test_n.csv", usecols=['vote_average'])['vote_average'].tolist()
-    pred_g = est.predict(input_fn=input_fn_pred)
+    pred_g = est.predict(input_fn=input_fn_test)
     pred_l = [e['predictions'][0] for e in pred_g]
     
     print("")
@@ -105,7 +130,6 @@ if __name__ == "__main__":
         labels=labels_l,
         predictions=pred_l)
 
-    coord = tf.train.Coordinator()
-
     with tf.Session() as sess:
         print("MAE: ", mae.eval())
+    """

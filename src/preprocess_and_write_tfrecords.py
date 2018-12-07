@@ -62,28 +62,30 @@ def prepare_data_s():
 
     def _float_feature(value):
         return tf.train.Feature(float_list=tf.train.FloatList(value=[value]))
-
-    tftrain = "train.tfrecords"
     
-    with tf.python_io.TFRecordWriter("train.tfrecords") as tf_writer:
-        header = True
-        for _, row in train.iterrows():
-            if header:
-                header = False
-                continue
+    def tf_writer(fname, partition):
+        with tf.python_io.TFRecordWriter(fname+".tfrecords") as tf_writer:
+            header = True
+            for _, row in partition.iterrows():
+                if header:
+                    header = False
+                    continue
 
-            feature = {
-                'vote_average': _float_feature(row['vote_average']),
-                'budget':       _float_feature(row['budget']),
-                'runtime':      _float_feature(row['runtime']),
-                'revenue':      _float_feature(row['revenue']),
-                'vote_count':   _float_feature(row['vote_count']),
-                'year':         _float_feature(row['year']),
-                'genres':       _bytes_feature(row['genres'])
-            }
+                feature = {
+                    'vote_average': _float_feature(row['vote_average']),
+                    'budget':       _float_feature(row['budget']),
+                    'runtime':      _float_feature(row['runtime']),
+                    'revenue':      _float_feature(row['revenue']),
+                    'vote_count':   _float_feature(row['vote_count']),
+                    'year':         _float_feature(row['year']),
+                    'genres':       _bytes_feature(row['genres'])
+                }
 
-            example = tf.train.Example(features=tf.train.Features(feature=feature))
-            tf_writer.write(example.SerializeToString())
+                example = tf.train.Example(features=tf.train.Features(feature=feature))
+                tf_writer.write(example.SerializeToString())
+
+    tf_writer("train", train)
+    tf_writer("test", test)
 
     # Output data file for genre corpus
     flat_list_of_genres_per_sample = [item for sublist in list_of_genres_per_sample for item in sublist]
