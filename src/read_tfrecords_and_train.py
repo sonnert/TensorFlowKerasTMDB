@@ -7,33 +7,6 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 CORPUS="corpus.txt"
 MODEL_DIR="models/"
 
-def input_fn_eval():
-    dataset = tf.data.TextLineDataset(filenames=TEST_DATA_N).skip(1)
-    HEADERS = ['vote_average', 'budget', 'runtime', 'revenue', 'vote_count', 'year']
-    FIELD_DEFAULTS = [[0.0], [0.0], [0.0], [0.0], [0.0], [0.0]]
-
-    def parse_line(line):
-        fields = tf.decode_csv(line, FIELD_DEFAULTS)
-        features = dict(zip(HEADERS, fields))
-        label = features.pop('vote_average')
-        return features, label
-
-    dataset = dataset.batch(32).map(parse_line)
-    return dataset
-
-def input_fn_pred():
-    dataset = tf.data.TextLineDataset(filenames=PREDICT_DATA).skip(1)
-    HEADERS = ['budget', 'runtime', 'revenue', 'vote_count', 'year']
-    FIELD_DEFAULTS = [[0.0], [0.0], [0.0], [0.0], [0.0]]
-
-    def parse_line(line):
-        fields = tf.decode_csv(line, FIELD_DEFAULTS)
-        features = dict(zip(HEADERS, fields))
-        return features
-
-    dataset = dataset.batch(32).map(parse_line)
-    return dataset
-
 def input_fn_train():
     dataset = tf.data.TFRecordDataset(filenames="train.tfrecords")
     
